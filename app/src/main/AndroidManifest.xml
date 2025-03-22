@@ -13,10 +13,11 @@
         android:theme="@style/Theme.Appli20240829"
         tools:targetApi="s"
         tools:ignore="ObsoleteSdkInt"
-        android:networkSecurityConfig="@xml/network_security_config"> <!-- Lien vers le fichier de config réseau -->
+        android:networkSecurityConfig="@xml/network_security_config">
 
+        <!-- LoginActivity lancée en premier -->
         <activity
-            android:name=".MainActivity"
+            android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,19 +25,11 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".AfficherListeDvdsActivity"
-            android:exported="true" />
-        <activity
-            android:name=".LoginActivity"
-            android:exported="true" />
-        <activity
-            android:name=".AfficherDetailDvdActivity"
-            android:exported="true" />
-        <activity
-            android:name=".PanierActivity"
-            android:exported="true" />
+        <activity android:name=".MainActivity" android:exported="true" />
+        <activity android:name=".AfficherListeDvdsActivity" android:exported="true" />
+        <activity android:name=".AfficherDetailDvdActivity" android:exported="true" />
+        <activity android:name=".PanierActivity" android:exported="true" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- Permission pour utiliser Internet -->
 
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

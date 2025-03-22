@@ -1,84 +1,88 @@
 package com.example.appli20240829;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText usernameEditText;
-    private EditText passwordEditText;
+    private EditText usernameField, passwordField;
     private Button loginButton;
-    private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialisation des vues
-        usernameEditText = findViewById(R.id.username);
-        passwordEditText = findViewById(R.id.password);
+        usernameField = findViewById(R.id.username);
+        passwordField = findViewById(R.id.password);
         loginButton = findViewById(R.id.login_button);
 
-        // Ouverture de la base de données existante
-        try {
-            database = openOrCreateDatabase("peach.db", MODE_PRIVATE, null);
-            Log.d("LoginActivity", "Base de données ouverte avec succès.");
-        } catch (Exception e) {
-            Log.e("LoginActivity", "Erreur lors de l'ouverture de la base de données : " + e.getMessage());
-            Toast.makeText(this, "Erreur avec la base de données", Toast.LENGTH_LONG).show();
-        }
+        loginButton.setOnClickListener(v -> {
+            String email = usernameField.getText().toString();
+            String password = passwordField.getText().toString();
 
-        // Gestion du clic sur le bouton de login
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String username = usernameEditText.getText().toString().trim();
-                String password = passwordEditText.getText().toString().trim();
-
-                if (username.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(LoginActivity.this, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show();
-                } else if (checkUser(username, password)) {
-                    // Si les informations sont correctes, passer à l'activité suivante
-                    Intent intent = new Intent(LoginActivity.this, AfficherListeDvdsActivity.class);
-                    startActivity(intent);
-                    finish(); // Terminer l'activité de login pour ne pas pouvoir revenir
-                } else {
-                    Toast.makeText(LoginActivity.this, "Nom d'utilisateur ou mot de passe incorrect", Toast.LENGTH_SHORT).show();
-                }
+            if (!email.isEmpty() && !password.isEmpty()) {
+                login(email, password);
+            } else {
+                Toast.makeText(this, "Veuillez remplir tous les champs.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    // Vérifie si l'utilisateur existe dans la base de données
-    private boolean checkUser(String username, String password) {
-        boolean exists = false;
-        try {
-            String query = "SELECT * FROM user WHERE username = ? AND password = ?";
-            Cursor cursor = database.rawQuery(query, new String[]{username, password});
-            exists = cursor.getCount() > 0;
-            cursor.close();
-        } catch (Exception e) {
-            Log.e("LoginActivity", "Erreur lors de la vérification de l'utilisateur : " + e.getMessage());
-        }
-        return exists;
-    }
+    private void login(String email, String password) {
+        new Thread(() -> {
+            try {
+                // URL mise à jour avec le bon chemin
+                String apiUrl = "http://10.0.2.2:8080/toad/customer/getByEmail?email=" + email;
+                URL url = new URL(apiUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (database != null) {
-            database.close();
-            Log.d("LoginActivity", "Base de données fermée.");
-        }
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String inputLine;
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+
+                    JSONObject userJson = new JSONObject(response.toString());
+                    String passwordFromApi = userJson.getString("password");
+
+                    runOnUiThread(() -> {
+                        if (password.equals(passwordFromApi)) {
+                            Toast.makeText(this, "Connexion réussie !", Toast.LENGTH_SHORT).show();
+
+                            // Rediriger vers la page principale
+                            Intent intent = new Intent(this, AfficherListeDvdsActivity.class);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(this, "Mot de passe incorrect.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    runOnUiThread(() -> Toast.makeText(this, "Utilisateur non trouvé.", Toast.LENGTH_SHORT).show());
+                }
+            } catch (Exception e) {
+                Log.e("LOGIN", "Erreur : ", e);
+                runOnUiThread(() -> Toast.makeText(this, "Erreur de connexion au serveur.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
 }

@@ -7,5 +7,9 @@
     <string name="mon_panier">Mon Panier</string>
     <string name="vider_panier">Vider le panier</string>
     <string name="liste_panier_desc">Liste des films ajoutés au panier</string>
-</resources>
 
+    <!-- Ajouts pour corriger les hardcoded text et accessibilité -->
+    <string name="titre_page">Liste des Films</string>
+    <string name="btn_panier">🛒 Panier</string>
+    <string name="liste_dvds_desc">Liste des DVD disponibles</string>
+</resources>

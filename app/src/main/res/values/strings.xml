@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Appli20240829</string>
+    <string name="description_du_dvd">Description du DVD</string>
+    <string name="réalisateur">Réalisateur</string>
+    <string name="titre_du_dvd">Titre du DVD</string>
+    <string name="retour">← Retour</string>
+    <string name="mon_panier">Mon Panier</string>
+    <string name="vider_panier">Vider le panier</string>
+    <string name="liste_panier_desc">Liste des films ajoutés au panier</string>
+</resources>
+

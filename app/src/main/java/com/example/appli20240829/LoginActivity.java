@@ -51,6 +51,13 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
             String email = usernameField.getText().toString();
             String password = passwordField.getText().toString();
 
+            //NEW URL-D
+            EditText edittextURL = findViewById(R.id.URLText);
+            DonneesPartagees.setURLConnexion(edittextURL.getText().toString());
+
+            Toast.makeText(getApplicationContext(), DonneesPartagees.getURLConnexion(), Toast.LENGTH_SHORT).show();
+            //NEW URL-F
+
             if (!email.isEmpty() && !password.isEmpty()) {
                 login(email, password);
             } else {
@@ -109,13 +116,18 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         // Make toast of the name of the course which is selected in the spinner
         //Toast.makeText(getApplicationContext(), listeURLs[position], Toast.LENGTH_SHORT).show();
+        //NEW URL-D
+        //DonneesPartagees.setURLConnexion(listeURLs[position]);
+        EditText URLText = findViewById(R.id.URLText);
+        URLText.setText(listeURLs[position]);
+        //NEW URL-F
+
         DonneesPartagees.setURLConnexion(listeURLs[position]);
         Toast.makeText(getApplicationContext(), DonneesPartagees.getURLConnexion(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
-        // No action needed when no selection is made
     }
     //SPINNER URLs-F
 }

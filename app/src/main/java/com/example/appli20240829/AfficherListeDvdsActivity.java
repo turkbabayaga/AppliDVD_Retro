@@ -28,7 +28,7 @@ public class AfficherListeDvdsActivity extends AppCompatActivity {
         btnPanier.setOnClickListener(v -> ouvrirPanier());
 
         // Appeler l'API pour récupérer la liste des films
-        new AppelerServiceRestGETAfficherListeDvdsTask(this).execute("http://10.0.2.2:8080/toad/film/all");
+        new AppelerServiceRestGETAfficherListeDvdsTask(this).execute(DonneesPartagees.getURLConnexion() +"/toad/film/all");
     }
 
     public void afficherFilms(ArrayList<HashMap<String, String>> filmList) {

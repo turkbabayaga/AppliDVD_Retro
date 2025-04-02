@@ -178,7 +178,7 @@ public class PanierActivity extends AppCompatActivity {
                     String lastUpdate = dateFormat.format(currentDate);
 
                     // Construire l'URL et les paramètres
-                    String apiUrl = "http://10.0.2.2:8080/toad/rental/add";
+                    String apiUrl = DonneesPartagees.getURLConnexion() +"/toad/rental/add";
                     String postData = "rental_date=" + rentalDate
                             + "&inventory_id=" + inventoryId
                             + "&customer_id=" + customerId

@@ -12,4 +12,10 @@
     <string name="titre_page">Liste des Films</string>
     <string name="btn_panier">🛒 Panier</string>
     <string name="liste_dvds_desc">Liste des DVD disponibles</string>
+
+    <!-- Liste d'URL ah gars la vie c har  -->
+    <string-array name="listeURLs">
+        <item>http://10.0.2.2:8080</item>
+        <item>http://192.168.8.80:8180</item>
+    </string-array>
 </resources>

@@ -1,21 +1,20 @@
 package com.example.appli20240829;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AfficherListeDvdsActivity extends AppCompatActivity {
 
     private LinearLayout listeContainer;
-    private Button btnPanier;
-    private HashMap<String, Integer> panier = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,94 +22,60 @@ public class AfficherListeDvdsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_afficher_liste_dvds);
 
         listeContainer = findViewById(R.id.listeContainer);
-        btnPanier = findViewById(R.id.btnPanier);
 
-        btnPanier.setOnClickListener(v -> ouvrirPanier());
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button boutonPanier = findViewById(R.id.boutonPanier);
+        boutonPanier.setOnClickListener(v -> {
+            Intent intent = new Intent(AfficherListeDvdsActivity.this, PanierActivity.class);
+            startActivity(intent);
+        });
 
-        // Appeler l'API pour récupérer la liste des films
-        new AppelerServiceRestGETAfficherListeDvdsTask(this).execute(DonneesPartagees.getURLConnexion() +"/toad/film/all");
+        // ✅ Appel de l’AsyncTask
+        new AppelerServiceRestGETAfficherListeDvdsTask(this).execute();
     }
 
-    public void afficherFilms(ArrayList<HashMap<String, String>> filmList) {
+    // ✅ Appelé par onPostExecute() pour afficher les films
+    public void afficherFilms(ArrayList<HashMap<String, String>> films) {
         listeContainer.removeAllViews();
 
-        for (HashMap<String, String> film : filmList) {
-            String titreFilm = film.get("title");
+        for (HashMap<String, String> film : films) {
+            LinearLayout bloc = new LinearLayout(this);
+            bloc.setOrientation(LinearLayout.VERTICAL);
+            bloc.setPadding(30, 30, 30, 30);
+            bloc.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
 
-            // Création d'une carte pour afficher le film
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setPadding(20, 20, 20, 20);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(0, 20, 0, 20);
+            bloc.setLayoutParams(params);
 
-            TextView txtFilm = new TextView(this);
-            txtFilm.setText(titreFilm + " (" + film.get("releaseYear") + ")");
-            txtFilm.setTextSize(18);
-            txtFilm.setPadding(8, 8, 8, 8);
-            card.addView(txtFilm);
+            TextView titre = new TextView(this);
+            titre.setText("🎬 " + film.get("title"));
+            titre.setTextSize(18);
+            titre.setPadding(0, 0, 0, 10);
 
-            // Bouton "Détail"
-            Button boutonDetail = new Button(this);
-            boutonDetail.setText("Détail");
-            boutonDetail.setOnClickListener(v -> afficherDetails(film));
-            card.addView(boutonDetail);
+            TextView description = new TextView(this);
+            description.setText("📝 " + film.get("description"));
 
-            listeContainer.addView(card);
+            Button btnDetails = new Button(this);
+            btnDetails.setText("Détails");
+            btnDetails.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AfficherDetailDvdActivity.class);
+                intent.putExtra("id", film.get("id"));
+                intent.putExtra("title", film.get("title"));
+                intent.putExtra("description", film.get("description"));
+                intent.putExtra("releaseYear", film.get("releaseYear"));
+                intent.putExtra("rentalDuration", film.get("rentalDuration"));
+                intent.putExtra("specialFeatures", film.get("specialFeatures"));
+                startActivity(intent);
+            });
+
+            bloc.addView(titre);
+            bloc.addView(description);
+            bloc.addView(btnDetails);
+
+            listeContainer.addView(bloc);
         }
-    }
-
-    private void afficherDetails(HashMap<String, String> film) {
-        Intent intent = new Intent(this, AfficherDetailDvdActivity.class);
-        intent.putExtra("title", film.get("title"));
-        intent.putExtra("releaseYear", film.get("releaseYear"));
-        intent.putExtra("rentalDuration", film.get("rentalDuration"));
-        intent.putExtra("description", film.get("description"));
-        intent.putExtra("specialFeatures", film.get("specialFeatures"));
-
-        // Passer le panier actuel à AfficherDetailDvdActivity
-        ArrayList<String> panierStr = new ArrayList<>();
-        for (String titre : panier.keySet()) {
-            panierStr.add(titre + ";" + panier.get(titre));
-        }
-        intent.putStringArrayListExtra("panier", panierStr);
-
-        // Lancer AfficherDetailDvdActivity avec un résultat attendu
-        startActivityForResult(intent, 1); // 1 est un code de requête arbitraire
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-            // Récupérer le panier mis à jour depuis AfficherDetailDvdActivity
-            ArrayList<String> panierStr = data.getStringArrayListExtra("panier");
-            if (panierStr != null) {
-                panier.clear(); // Vider le panier actuel
-                for (String item : panierStr) {
-                    String[] parts = item.split(";");
-                    if (parts.length == 2) {
-                        panier.put(parts[0], Integer.parseInt(parts[1]));
-                    }
-                }
-            }
-        }
-    }
-
-    private void ouvrirPanier() {
-        if (panier.isEmpty()) {
-            Toast.makeText(this, "Votre panier est vide.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Convertir le panier en une liste de chaînes
-        ArrayList<String> panierStr = new ArrayList<>();
-        for (String titre : panier.keySet()) {
-            panierStr.add(titre + ";" + panier.get(titre));
-        }
-
-        // Ouvrir PanierActivity avec le panier
-        Intent intent = new Intent(this, PanierActivity.class);
-        intent.putStringArrayListExtra("panier", panierStr);
-        startActivity(intent);
     }
 }

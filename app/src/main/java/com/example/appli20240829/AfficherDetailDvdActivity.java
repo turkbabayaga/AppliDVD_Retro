@@ -1,80 +1,86 @@
+
 package com.example.appli20240829;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class AfficherDetailDvdActivity extends AppCompatActivity {
 
-    private TextView titreDvd, anneeSortieDvd, dureeLocationDvd, descriptionDvd, specialFeaturesDvd;
-    private Button boutonRetour, boutonAjouterPanier;
-    private HashMap<String, Integer> panier = new HashMap<>();
+    private int filmId;
+    private String titre;
+    private Button boutonAjouter;
+    private TextView dispoText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_afficher_detail_dvd);
 
-        // Initialisation des vues
-        titreDvd = findViewById(R.id.titreDvd);
-        anneeSortieDvd = findViewById(R.id.anneeSortieDvd);
-        dureeLocationDvd = findViewById(R.id.dureeLocationDvd);
-        descriptionDvd = findViewById(R.id.descriptionDvd);
-        specialFeaturesDvd = findViewById(R.id.specialFeaturesDvd);
-        boutonRetour = findViewById(R.id.boutonRetour);
-        boutonAjouterPanier = findViewById(R.id.boutonAjouterPanier);
+        TextView titreView = findViewById(R.id.titreDvd);
+        TextView anneeSortieView = findViewById(R.id.anneeSortieDvd);
+        TextView dureeLocationView = findViewById(R.id.dureeLocationDvd);
+        TextView descriptionView = findViewById(R.id.descriptionDvd);
+        TextView specialFeaturesView = findViewById(R.id.specialFeaturesDvd);
+        dispoText = findViewById(R.id.dispoText); // Nouveau champ à afficher
+        boutonAjouter = findViewById(R.id.boutonAjouterPanier);
+        Button boutonRetour = findViewById(R.id.boutonRetour);
 
-        // Récupérer les données du film passées par l'intent
-        Intent intent = getIntent();
-        String titre = intent.getStringExtra("title");
-        String releaseYear = intent.getStringExtra("releaseYear");
-        String rentalDuration = intent.getStringExtra("rentalDuration");
-        String description = intent.getStringExtra("description");
-        String specialFeatures = intent.getStringExtra("specialFeatures");
+        filmId = Integer.parseInt(getIntent().getStringExtra("id"));
+        titre = getIntent().getStringExtra("title");
 
-        // Afficher les détails du film
-        titreDvd.setText(titre);
-        anneeSortieDvd.setText("Année : " + releaseYear);
-        dureeLocationDvd.setText("Durée : " + rentalDuration + " jours");
-        descriptionDvd.setText("Description : " + description);
-        specialFeaturesDvd.setText("Fonctionnalités spéciales : " + specialFeatures);
+        titreView.setText(titre);
+        anneeSortieView.setText("Année de sortie : " + getIntent().getStringExtra("releaseYear"));
+        dureeLocationView.setText("Durée : " + getIntent().getStringExtra("rentalDuration") + " jours");
+        descriptionView.setText(getIntent().getStringExtra("description"));
+        specialFeaturesView.setText("Fonctionnalités : " + getIntent().getStringExtra("specialFeatures"));
 
-        // Récupérer le panier passé par l'intent (s'il existe)
-        ArrayList<String> panierStr = intent.getStringArrayListExtra("panier");
-        if (panierStr != null) {
-            for (String item : panierStr) {
-                String[] parts = item.split(";");
-                if (parts.length == 2) {
-                    panier.put(parts[0], Integer.parseInt(parts[1]));
-                }
-            }
-        }
-
-        // Gestion du clic sur le bouton "Ajouter au panier"
-        boutonAjouterPanier.setOnClickListener(v -> {
-            // Ajouter le film au panier
-            panier.put(titre, panier.getOrDefault(titre, 0) + 1);
-            Toast.makeText(this, "Ajouté au panier !", Toast.LENGTH_SHORT).show();
+        boutonAjouter.setOnClickListener(v -> {
+            FilmPanierItem item = new FilmPanierItem(filmId, titre);
+            int quantite = DonneesPartagees.panierGlobal.getOrDefault(item, 0);
+            DonneesPartagees.panierGlobal.put(item, quantite + 1);
+            Toast.makeText(this, "Ajouté au panier", Toast.LENGTH_SHORT).show();
         });
 
-        // Gestion du clic sur le bouton "Retour"
-        boutonRetour.setOnClickListener(v -> {
-            // Convertir le panier en une liste de chaînes pour le passer via un Intent
-            ArrayList<String> panierStrUpdated = new ArrayList<>();
-            for (String filmTitre : panier.keySet()) {
-                panierStrUpdated.add(filmTitre + ";" + panier.get(filmTitre));
-            }
+        boutonRetour.setOnClickListener(v -> finish());
 
-            // Renvoyer le panier à l'activité précédente
-            Intent resultIntent = new Intent();
-            resultIntent.putStringArrayListExtra("panier", panierStrUpdated);
-            setResult(RESULT_OK, resultIntent);
-            finish();
-        });
+        verifierDisponibilite(filmId);
+    }
+
+    private void verifierDisponibilite(int id) {
+        new Thread(() -> {
+            try {
+                String urlString = DonneesPartagees.getURLConnexion() + "/toad/inventory/available/getById?id=" + id;
+                URL url = new URL(urlString);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String response = in.readLine();
+                in.close();
+
+                runOnUiThread(() -> {
+                    if (response != null && !response.trim().isEmpty()) {
+                        dispoText.setText("✅ Disponible");
+                        boutonAjouter.setEnabled(true);
+                    } else {
+                        dispoText.setText("❌ Non disponible");
+                        boutonAjouter.setEnabled(false);
+                    }
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    dispoText.setText("❌ Erreur de connexion");
+                    boutonAjouter.setEnabled(false);
+                });
+            }
+        }).start();
     }
 }

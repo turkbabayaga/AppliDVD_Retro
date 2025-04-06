@@ -1,73 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@android:color/white">
+    android:background="#f7f7f7">
 
-    <!-- Barre du haut avec Titre et Retour -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Bouton retour -->
+    <Button
+        android:id="@+id/boutonRetour"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:text="⬅ Retour"
+        android:layout_marginBottom="12dp" />
 
-        <Button
-            android:id="@+id/btnRetour"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="← Retour"
-            android:textColor="@android:color/black"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/titrePanier"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Mon Panier"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <!-- Liste des films dans le panier -->
+    <!-- Zone dynamique où les lignes de films s’ajouteront -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"
-        android:contentDescription="Liste des films ajoutés au panier">
+        android:contentDescription="Contenu du panier">
 
         <LinearLayout
-            android:id="@+id/panierContainer"
+            android:id="@+id/layoutPanier"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp" />
+            android:orientation="vertical" />
     </ScrollView>
-    <!-- Bouton pour vider le panier -->
-    <Button
-        android:id="@+id/btnViderPanier"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Vider le panier"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:background="@android:color/holo_red_dark" />
 
-    <!-- Bouton pour valider la commande -->
-    <Button
-        android:id="@+id/btnValiderPanier"
+    <!-- Boutons d’action -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/holo_green_dark"
-        android:text="Valider la commande"
-        android:textColor="#212121"
-        android:textSize="16sp" />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/boutonVider"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗑 Vider"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="#e57373"
+            android:textColor="#ffffff" />
+
+        <Button
+            android:id="@+id/boutonValider"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✔ Valider"
+            android:backgroundTint="#81c784"
+            android:textColor="#ffffff" />
+    </LinearLayout>
 </LinearLayout>

@@ -3,9 +3,11 @@ package com.example.appli20240829;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,51 +18,35 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-//SPINNER URLs-D
-import android.widget.AdapterView;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter ;
-import android.widget.Toast;
-//SPINNER URLs-F
 
 public class LoginActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    private EditText usernameField, passwordField, edittextURL;
+    private EditText usernameField, passwordField;
     private Button loginButton;
-    private Spinner spinnerURLs;
-    private String[] listeURLs;
-    private String urlSelectionnee = "";
+    String[] listeURLs = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Spinner init
         listeURLs = getResources().getStringArray(R.array.listeURLs);
-        spinnerURLs = findViewById(R.id.spinnerURLs);
-        ArrayAdapter<CharSequence> adapterListeURLs = ArrayAdapter.createFromResource(
-                this, R.array.listeURLs, android.R.layout.simple_spinner_item
-        );
-        adapterListeURLs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerURLs.setAdapter(adapterListeURLs);
+        Spinner spinnerURLs = findViewById(R.id.spinnerURLs);
         spinnerURLs.setOnItemSelectedListener(this);
+        ArrayAdapter<CharSequence> adapterListeURLs = ArrayAdapter.createFromResource(this, R.array.listeURLs, android.R.layout.simple_spinner_item);
+        adapterListeURLs.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        spinnerURLs.setAdapter(adapterListeURLs);
 
-        // Champs
         usernameField = findViewById(R.id.username);
         passwordField = findViewById(R.id.password);
-        edittextURL = findViewById(R.id.URLText);
         loginButton = findViewById(R.id.login_button);
 
         loginButton.setOnClickListener(v -> {
             String email = usernameField.getText().toString();
             String password = passwordField.getText().toString();
-            String urlManuelle = edittextURL.getText().toString().trim();
 
-            // Décision : champ manuel prioritaire, sinon Spinner
-            String urlFinale = urlManuelle.isEmpty() ? urlSelectionnee : urlManuelle;
-            DonneesPartagees.setURLConnexion(urlFinale);
-            Toast.makeText(this, "Connexion à : " + urlFinale, Toast.LENGTH_SHORT).show();
+            EditText edittextURL = findViewById(R.id.URLText);
+            DonneesPartagees.setURLConnexion(edittextURL.getText().toString());
 
             if (!email.isEmpty() && !password.isEmpty()) {
                 login(email, password);
@@ -91,10 +77,16 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
                     JSONObject userJson = new JSONObject(response.toString());
                     String passwordFromApi = userJson.getString("password");
 
+                    // ✅ Récupération et stockage du customerId
+                    int idFromApi = userJson.getInt("customerId");
+                    DonneesPartagees.setCustomerId(idFromApi);
+                    Log.d("LOGIN", "Customer ID = " + idFromApi);
+
                     runOnUiThread(() -> {
                         if (password.equals(passwordFromApi)) {
                             Toast.makeText(this, "Connexion réussie !", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(this, AfficherListeDvdsActivity.class));
+                            Intent intent = new Intent(this, AfficherListeDvdsActivity.class);
+                            startActivity(intent);
                             finish();
                         } else {
                             Toast.makeText(this, "Mot de passe incorrect.", Toast.LENGTH_SHORT).show();
@@ -111,12 +103,12 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     }
 
     @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        urlSelectionnee = listeURLs[position];
+    public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
+        EditText URLText = findViewById(R.id.URLText);
+        URLText.setText(listeURLs[position]);
+        DonneesPartagees.setURLConnexion(listeURLs[position]);
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        urlSelectionnee = ""; // par défaut
-    }
+    public void onNothingSelected(AdapterView<?> parent) { }
 }

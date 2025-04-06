@@ -1,11 +1,9 @@
+
 package com.example.appli20240829;
 
-import android.app.AlertDialog;
-import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,227 +11,145 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.Map;
+import java.util.Scanner;
 
 public class PanierActivity extends AppCompatActivity {
-    private LinearLayout panierContainer;
-    private HashMap<String, Integer> panier = new HashMap<>();
+
+    private LinearLayout layoutPanier;
+    private HashMap<FilmPanierItem, Integer> panier;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_panier);
 
-        panierContainer = findViewById(R.id.panierContainer);
-        Button btnViderPanier = findViewById(R.id.btnViderPanier);
-        Button btnRetour = findViewById(R.id.btnRetour);
+        layoutPanier = findViewById(R.id.layoutPanier);
+        Button boutonVider = findViewById(R.id.boutonVider);
+        Button boutonValider = findViewById(R.id.boutonValider);
+        Button boutonRetour = findViewById(R.id.boutonRetour);
 
-        ArrayList<String> panierStr = getIntent().getStringArrayListExtra("panier");
-        if (panierStr != null) {
-            for (String item : panierStr) {
-                String[] parts = item.split(";");
-                if (parts.length == 2) {
-                    try {
-                        String titre = parts[0];
-                        int quantite = Integer.parseInt(parts[1]);
-                        panier.put(titre, quantite);
-                    } catch (NumberFormatException e) {
-                        Log.e("PanierActivity", "Quantité non valide pour l'élément : " + item);
-                    }
-                } else {
-                    Log.e("PanierActivity", "Format incorrect pour l'élément : " + item);
-                }
-            }
-        }
+        panier = DonneesPartagees.panierGlobal;
 
         afficherPanier();
 
-        btnViderPanier.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("Confirmation")
-                    .setMessage("Voulez-vous vraiment vider votre panier ?")
-                    .setPositiveButton("Oui", (dialog, which) -> {
-                        panier.clear();
-                        afficherPanier();
-                        Toast.makeText(this, "Panier vidé !", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("Annuler", null)
-                    .show();
+        boutonVider.setOnClickListener(v -> {
+            panier.clear();
+            layoutPanier.removeAllViews();
+            Toast.makeText(this, "Panier vidé", Toast.LENGTH_SHORT).show();
         });
 
-        btnRetour.setOnClickListener(v -> {
-            ArrayList<String> panierStrUpdated = new ArrayList<>();
-            for (String titre : panier.keySet()) {
-                panierStrUpdated.add(titre + ";" + panier.get(titre));
+        boutonRetour.setOnClickListener(v -> finish());
+
+        boutonValider.setOnClickListener(v -> {
+            if (panier.isEmpty()) {
+                Toast.makeText(this, "Panier vide", Toast.LENGTH_SHORT).show();
+            } else {
+                validerCommande();
             }
-            Intent resultIntent = new Intent();
-            resultIntent.putStringArrayListExtra("panier", panierStrUpdated);
-            setResult(RESULT_OK, resultIntent);
-            finish();
         });
-        Button btnValiderPanier = findViewById(R.id.btnValiderPanier);
-        btnValiderPanier.setOnClickListener(v -> validerPanier());
     }
 
     private void afficherPanier() {
-        panierContainer.removeAllViews();
+        layoutPanier.removeAllViews();
 
-        if (panier.isEmpty()) {
-            TextView txtVide = new TextView(this);
-            txtVide.setText("Votre panier est vide.");
-            txtVide.setTextSize(18);
-            txtVide.setPadding(20, 20, 20, 20);
-            txtVide.setTextColor(Color.GRAY);
-            txtVide.setGravity(Gravity.CENTER);
-            panierContainer.addView(txtVide);
-            return;
-        }
+        for (FilmPanierItem item : panier.keySet()) {
+            int quantite = panier.get(item);
 
-        for (String titre : panier.keySet()) {
-            int quantite = panier.get(titre);
+            LinearLayout ligne = new LinearLayout(this);
+            ligne.setOrientation(LinearLayout.HORIZONTAL);
+            ligne.setGravity(Gravity.CENTER_VERTICAL);
+            ligne.setPadding(0, 16, 0, 16);
 
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setPadding(20, 20, 20, 20);
-            card.setBackgroundColor(Color.LTGRAY);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(10, 10, 10, 10);
-            card.setLayoutParams(params);
-
-            TextView txtFilm = new TextView(this);
-            txtFilm.setText(titre + " (x" + quantite + ")");
-            txtFilm.setTextSize(18);
-            txtFilm.setPadding(8, 8, 8, 8);
-            card.addView(txtFilm);
-
-            LinearLayout layoutBoutons = new LinearLayout(this);
-            layoutBoutons.setOrientation(LinearLayout.HORIZONTAL);
-            layoutBoutons.setGravity(Gravity.CENTER);
+            TextView nomFilm = new TextView(this);
+            nomFilm.setText(item.titre);
+            nomFilm.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2));
 
             Button btnMoins = new Button(this);
-            btnMoins.setText("-");
-            btnMoins.setTextSize(20);
+            btnMoins.setText("−");
             btnMoins.setOnClickListener(v -> {
-                if (quantite > 1) {
-                    panier.put(titre, quantite - 1);
+                int q = panier.get(item);
+                if (q > 1) {
+                    panier.put(item, q - 1);
                 } else {
-                    panier.remove(titre);
+                    panier.remove(item);
                 }
                 afficherPanier();
             });
+
+            TextView qte = new TextView(this);
+            qte.setText(" x" + quantite + " ");
+            qte.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
             Button btnPlus = new Button(this);
             btnPlus.setText("+");
-            btnPlus.setTextSize(20);
             btnPlus.setOnClickListener(v -> {
-                panier.put(titre, panier.getOrDefault(titre, 0) + 1);
+                panier.put(item, panier.get(item) + 1);
                 afficherPanier();
             });
 
-            layoutBoutons.addView(btnMoins);
-            layoutBoutons.addView(btnPlus);
-            card.addView(layoutBoutons);
+            ligne.addView(nomFilm);
+            ligne.addView(btnMoins);
+            ligne.addView(qte);
+            ligne.addView(btnPlus);
 
-            panierContainer.addView(card);
+            layoutPanier.addView(ligne);
         }
     }
-    private void validerPanier() {
-        if (panier.isEmpty()) {
-            Toast.makeText(this, "Votre panier est vide !", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
+    private void validerCommande() {
         new Thread(() -> {
             try {
-                // Format de date pour la base de données
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                for (Map.Entry<FilmPanierItem, Integer> entry : panier.entrySet()) {
+                    FilmPanierItem item = entry.getKey();
+                    int quantite = entry.getValue();
 
-                for (String titre : panier.keySet()) {
-                    int inventoryId = 1; // À récupérer dynamiquement selon la BDD
-                    int customerId = 1; // À récupérer dynamiquement selon l'utilisateur connecté
-                    int staffId = 1; // L’ID du staff qui enregistre la location
+                    for (int i = 0; i < quantite; i++) {
+                        URL url = new URL(DonneesPartagees.getURLConnexion() + "/toad/inventory/available/getById?id=" + item.filmId);
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("GET");
+                        Scanner scanner = new Scanner(connection.getInputStream());
+                        String response = scanner.hasNext() ? scanner.nextLine() : "";
+                        scanner.close();
 
-                    // Générer la date de location (date actuelle)
-                    Date currentDate = new Date();
-                    String rentalDate = dateFormat.format(currentDate);
+                        if (!response.isEmpty()) {
+                            int inventoryId = Integer.parseInt(response);
+                            URL rentalUrl = new URL(DonneesPartagees.getURLConnexion() + "/toad/rental/add");
+                            HttpURLConnection rentalConn = (HttpURLConnection) rentalUrl.openConnection();
+                            rentalConn.setRequestMethod("POST");
+                            rentalConn.setDoOutput(true);
 
-                    // Calculer la date de retour (1 jour après la date de location)
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(currentDate);
-                    calendar.add(Calendar.DAY_OF_MONTH, 1); // Ajouter 1 jour
-                    String returnDate = dateFormat.format(calendar.getTime());
+                            String now = LocalDateTime.now().toString();
+                            String postData = "rental_date=" + now +
+                                    "&inventory_id=" + inventoryId +
+                                    "&customer_id=" + DonneesPartagees.getCustomerId() +
+                                    "&return_date=" +
+                                    "&staff_id=1" +
+                                    "&last_update=" + now;
 
-                    // Générer la date de dernière mise à jour (date actuelle)
-                    String lastUpdate = dateFormat.format(currentDate);
+                            OutputStreamWriter writer = new OutputStreamWriter(rentalConn.getOutputStream());
+                            writer.write(postData);
+                            writer.flush();
+                            writer.close();
 
-                    // Construire l'URL et les paramètres
-                    String apiUrl = DonneesPartagees.getURLConnexion() +"/toad/rental/add";
-                    String postData = "rental_date=" + rentalDate
-                            + "&inventory_id=" + inventoryId
-                            + "&customer_id=" + customerId
-                            + "&return_date=" + returnDate
-                            + "&staff_id=" + staffId
-                            + "&last_update=" + lastUpdate;
-
-                    // Envoyer la requête POST
-                    boolean success = sendPostRequest(apiUrl, postData);
-
-                    if (success) {
-                        Log.d("VALIDATION", "Location enregistrée pour : " + titre);
-                    } else {
-                        Log.e("VALIDATION", "Erreur lors de l'enregistrement de " + titre);
+                            rentalConn.getInputStream().close(); // force l'exécution
+                        }
                     }
                 }
 
-                // Mise à jour UI après validation
                 runOnUiThread(() -> {
-                    panier.clear();
+                    Toast.makeText(this, "Commande validée", Toast.LENGTH_SHORT).show();
+                    DonneesPartagees.panierGlobal.clear();
                     afficherPanier();
-                    Toast.makeText(this, "Commande validée avec succès !", Toast.LENGTH_SHORT).show();
                 });
-
             } catch (Exception e) {
-                Log.e("VALIDATION", "Erreur lors de l'envoi de la requête", e);
+                runOnUiThread(() -> Toast.makeText(this, "Erreur: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
     }
-
-    private boolean sendPostRequest(String apiUrl, String postData) {
-        try {
-            URL url = new URL(apiUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setDoOutput(true);
-            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
-
-            // Envoyer les données
-            OutputStream os = conn.getOutputStream();
-            os.write(postData.getBytes("UTF-8"));
-            os.flush();
-            os.close();
-
-            int responseCode = conn.getResponseCode();
-            Log.d("API_RESPONSE", "Code réponse : " + responseCode);
-
-            return responseCode == HttpURLConnection.HTTP_OK;
-
-        } catch (Exception e) {
-            Log.e("API_ERROR", "Erreur lors de la requête API", e);
-            return false;
-        }
-    }
-
 }

@@ -29,11 +29,11 @@ public class AfficherListeDvdsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // ✅ Appel de l’AsyncTask
+        // Appel de l’AsyncTask
         new AppelerServiceRestGETAfficherListeDvdsTask(this).execute();
     }
 
-    // ✅ Appelé par onPostExecute() pour afficher les films
+    // Appelé par onPostExecute() pour afficher les films
     public void afficherFilms(ArrayList<HashMap<String, String>> films) {
         listeContainer.removeAllViews();
 

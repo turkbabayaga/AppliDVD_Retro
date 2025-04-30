@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Appli20240829</string>
+    <string name="app_name">RFTG.test</string>
     <string name="description_du_dvd">Description du DVD</string>
     <string name="réalisateur">Réalisateur</string>
     <string name="titre_du_dvd">Titre du DVD</string>
@@ -15,7 +15,8 @@
 
     <!-- Liste d'URL ah gars la vie c har  -->
     <string-array name="listeURLs">
-        <item>http://10.0.2.2:8080</item>
+        <item>http://10.0.2.2:8180</item>
         <item>http://192.168.8.80:8180</item>
+        <item>http://10.0.2.3:8080</item>
     </string-array>
 </resources>

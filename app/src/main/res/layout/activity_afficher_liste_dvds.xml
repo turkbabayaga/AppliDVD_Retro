@@ -37,6 +37,29 @@
             android:textColor="#212121" />
     </LinearLayout>
 
+    <!-- DSA Début - UI filtre par catégorie -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <Spinner
+            android:id="@+id/spinnerCategories"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:spinnerMode="dropdown" />
+
+        <Button
+            android:id="@+id/btnFiltrerCategorie"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filtrer" />
+    </LinearLayout>
+    <!-- DSA Fin -->
+
     <!-- Liste de films avec ScrollView -->
     <ScrollView
         android:layout_width="match_parent"

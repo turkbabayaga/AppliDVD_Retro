@@ -57,7 +57,15 @@ public class AppelerServiceRestGETAfficherListeDvdsTask extends AsyncTask<Void, 
                 filmData.put("rentalDuration", String.valueOf(film.getInt("rentalDuration")));
                 filmData.put("specialFeatures", film.getString("specialFeatures"));
 
-                // DonneesPartagees.setFilmIdForTitle (obsolète, supprimé)(filmData.get("title"), Integer.parseInt(filmData.get("id")));
+                // DSA Début - récupération de la catégorie
+                JSONObject categoryObj = film.optJSONObject("category");
+                if (categoryObj != null) {
+                    filmData.put("category", categoryObj.optString("name", ""));
+                } else {
+                    filmData.put("category", "");
+                }
+                Log.d("FILM_CATEGORY", "Film: " + film.getString("title") + " / Catégorie: " + filmData.get("category"));
+                // DSA Fin
 
                 listeFilms.add(filmData);
             }
@@ -73,50 +81,14 @@ public class AppelerServiceRestGETAfficherListeDvdsTask extends AsyncTask<Void, 
     protected void onPostExecute(ArrayList<HashMap<String, String>> films) {
         super.onPostExecute(films);
 
-        LinearLayout container = activity.findViewById(R.id.listeContainer);
-        container.removeAllViews();
-
         if (films != null && !films.isEmpty()) {
-            for (HashMap<String, String> film : films) {
-                LinearLayout bloc = new LinearLayout(activity);
-                bloc.setOrientation(LinearLayout.VERTICAL);
-                bloc.setPadding(30, 30, 30, 30);
-                bloc.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                params.setMargins(0, 20, 0, 20);
-                bloc.setLayoutParams(params);
-
-                TextView titre = new TextView(activity);
-                titre.setText("🎬 " + film.get("title"));
-                titre.setTextSize(18);
-                titre.setPadding(0, 0, 0, 10);
-
-                TextView description = new TextView(activity);
-                description.setText("📝 " + film.get("description"));
-
-                Button btnDetails = new Button(activity);
-                btnDetails.setText("Détails");
-                btnDetails.setOnClickListener(v -> {
-                    Intent intent = new Intent(activity, AfficherDetailDvdActivity.class);
-                    intent.putExtra("id", film.get("id"));
-                    intent.putExtra("title", film.get("title"));
-                    intent.putExtra("description", film.get("description"));
-                    intent.putExtra("releaseYear", film.get("releaseYear"));
-                    intent.putExtra("rentalDuration", film.get("rentalDuration"));
-                    intent.putExtra("specialFeatures", film.get("specialFeatures"));
-                    activity.startActivity(intent);
-                });
-
-                bloc.addView(titre);
-                bloc.addView(description);
-                bloc.addView(btnDetails);
-
-                container.addView(bloc);
-            }
+            // DSA Début - remplissage centralisé + affichage visuel
+            activity.afficherFilms(films);
+            // DSA Fin
         } else {
+            LinearLayout container = activity.findViewById(R.id.listeContainer);
+            container.removeAllViews();
+
             TextView vide = new TextView(activity);
             vide.setText("Aucun film disponible.");
             vide.setGravity(Gravity.CENTER);
